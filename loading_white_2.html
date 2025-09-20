@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Equist Luxury Homes</title>
+<title>Equist loading: main page</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <!-- Zolina font (via Bunny Fonts CDN) -->
@@ -140,7 +140,8 @@ html, body {
 }
     @media screen and (max-width: 991px){
    .scroll-cue{padding-bottom:5rem}
-
+}
+@media (max-width: 650px) {
   .hero-title { font-size: 2.2rem; }
   .hero-logo { width: 200px; }
 .ov.top { top:0; left:0; width:100%; height:calc(50% - 148px); }
@@ -231,7 +232,7 @@ function startLoaderAnimation() {
   overlay.style.opacity=1; overlay.style.display="block";
   const tl = gsap.timeline();
   tl.to(overlay,{opacity:0,duration:0.2});
-  tl.to(loader,{scale:20,duration:0.7,ease:"power3.in",delay:2});
+  tl.to(loader,{scale:30,duration:0.7,ease:"power3.in",delay:2});
   tl.set(loader,{display:"none"});
 }
 window.onload = init;
