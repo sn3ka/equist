@@ -1842,56 +1842,81 @@ loadingTimeline
                 }
             });
 
-            // ===== HORIZONTAL SCROLL =====
-            const horizontalSection = document.querySelector('#horizontal-scroll');
-            const horizontalWrapper = document.querySelector('.horizontal-wrapper');
-            
-            const getScrollAmount = () => {
-                let scrollWidth = horizontalWrapper.scrollWidth;
-                return -(scrollWidth - window.innerWidth);
-            };
+            // ===== HORIZONTAL SCROLL (Optimized) =====
+        const horizontalSection = document.querySelector('#horizontal-scroll');
+        const horizontalWrapper = document.querySelector('.horizontal-wrapper');
 
-            const horizontalScroll = gsap.to(horizontalWrapper, {
-                x: getScrollAmount,
-                ease: 'none',
+        // --- FIX 1: Use requestAnimationFrame for flickerless update ---
+        // --- FIX 2: Reduce scroll area for less lag ---
+        // --- FIX 3: Use will-change for gpu acceleration (already in CSS) ---
+
+        // Helper: disable image pointer events during scroll to avoid browser repaint bugs
+        document.querySelectorAll('.horizontal-card-image img')
+            .forEach(img => img.style.pointerEvents = 'none');
+
+        const getScrollAmount = () => {
+            // Use a smaller multiplier for end so scroll is less heavy
+            const scrollWidth = horizontalWrapper.scrollWidth;
+            return -(scrollWidth - window.innerWidth);
+        };
+
+        let lastX = 0, animating = false;
+        // Use a proxy object for GSAP to update so we can throttle DOM updates
+        const proxy = { x: 0 };
+
+        const horizontalScroll = gsap.to(proxy, {
+            x: () => getScrollAmount(),
+            ease: 'none',
+            scrollTrigger: {
+                trigger: horizontalSection,
+                start: 'top top',
+                end: () => '+=' + horizontalWrapper.scrollWidth * 0.6, // less scroll for performance
+                pin: true,
+                scrub: 0.4, // less lag, more responsive
+                invalidateOnRefresh: true,
+                anticipatePin: 1,
+                onUpdate: self => {
+                    if (!animating) {
+                        animating = true;
+                        requestAnimationFrame(() => {
+                            horizontalWrapper.style.transform = `translate3d(${proxy.x}px,0,0)`;
+                            animating = false;
+                        });
+                    }
+                }
+            }
+        });
+
+        // Animate images scale on scroll, fix flicker by using transform: translateZ(0)
+        document.querySelectorAll('.horizontal-card-image img').forEach((img) => {
+            img.style.transform = 'translateZ(0)'; // triggers gpu for flicker fix
+            gsap.to(img, {
+                scale: 1.12,
                 scrollTrigger: {
-                    trigger: horizontalSection,
-                    start: 'top top',
-                    end: () => `+=${horizontalWrapper.scrollWidth * 0.8}`,
-                    pin: true,
-                    scrub: 1,
-                    invalidateOnRefresh: true,
-                    anticipatePin: 1
+                    trigger: img.closest('.horizontal-section'),
+                    containerAnimation: horizontalScroll,
+                    start: 'left right',
+                    end: 'right left',
+                    scrub: 0.4
                 }
             });
+        });
 
-            gsap.utils.toArray('.horizontal-card-image img').forEach((img) => {
-                gsap.to(img, {
-                    scale: 1.2,
-                    scrollTrigger: {
-                        trigger: img.closest('.horizontal-section'),
-                        containerAnimation: horizontalScroll,
-                        start: 'left right',
-                        end: 'right left',
-                        scrub: 1
-                    }
-                });
+        // Animate overlays
+        document.querySelectorAll('.horizontal-card-overlay').forEach((overlay) => {
+            gsap.from(overlay.children, {
+                y: 50,
+                opacity: 0,
+                stagger: 0.08,
+                scrollTrigger: {
+                    trigger: overlay,
+                    containerAnimation: horizontalScroll,
+                    start: 'left center',
+                    end: 'center center',
+                    scrub: 0.4
+                }
             });
-
-            gsap.utils.toArray('.horizontal-card-overlay').forEach((overlay) => {
-                gsap.from(overlay.children, {
-                    y: 50,
-                    opacity: 0,
-                    stagger: 0.1,
-                    scrollTrigger: {
-                        trigger: overlay,
-                        containerAnimation: horizontalScroll,
-                        start: 'left center',
-                        end: 'center center',
-                        scrub: 1
-                    }
-                });
-            });
+        });
 
             // ===== HOVER BLUR SECTION =====
             const blurParts = document.querySelectorAll('.blur-part');
