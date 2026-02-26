@@ -51,14 +51,15 @@ html, body {
     100% 100%,
     0 100%,
     0 0,
-    50% calc(50% - var(--halfH)),
-    calc(50% - var(--halfW)) calc(50% - var(--halfH)),
-    calc(50% - var(--halfW)) calc(50% + var(--halfH)),
-    calc(50% + var(--halfW)) calc(50% + var(--halfH)),
-    calc(50% + var(--halfW)) calc(50% - var(--halfH)),
-    50% calc(50% - var(--halfH))
+    50% calc(50% - var(--half)),
+    calc(50% - var(--half)) calc(50% - var(--half)),
+    calc(50% - var(--half)) calc(50% + var(--half)),
+    calc(50% + var(--half)) calc(50% + var(--half)),
+    calc(50% + var(--half)) calc(50% - var(--half)),
+    50% calc(50% - var(--half))
   );
 }
+    
     
 /*
 .ov.top { top:0; left:0; width:100%; height:calc(50% - 148px); }
@@ -239,13 +240,12 @@ function updateMask() {
   const overlay = document.querySelector('.overlay');
 
   const rect = canvas.getBoundingClientRect();
+  const half = rect.width / 2 - 2;
 
-  overlay.style.setProperty('--halfW', rect.width / 2 + 'px');
-  overlay.style.setProperty('--halfH', rect.height / 2 + 'px');
+  overlay.style.setProperty('--half', half + 'px');
 }
 
 window.addEventListener('resize', updateMask);
-window.addEventListener('orientationchange', updateMask);
 window.addEventListener('load', updateMask);
 	
 let canvas, stage, exportRoot;
