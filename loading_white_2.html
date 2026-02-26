@@ -51,12 +51,12 @@ html, body {
     100% 100%,
     0 100%,
     0 0,
-    50% calc(50% - 298px),
-    calc(50% - 298px) calc(50% - 298px),
-    calc(50% - 298px) calc(50% + 298px),
-    calc(50% + 298px) calc(50% + 298px),
-    calc(50% + 298px) calc(50% - 298px),
-    50% calc(50% - 298px)
+    50% calc(50% - var(--half)),
+    calc(50% - var(--half)) calc(50% - var(--half)),
+    calc(50% - var(--half)) calc(50% + var(--half)),
+    calc(50% + var(--half)) calc(50% + var(--half)),
+    calc(50% + var(--half)) calc(50% - var(--half)),
+    50% calc(50% - var(--half))
   );
 }
     
@@ -235,6 +235,19 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
+function updateMask() {
+  const canvas = document.getElementById('canvas');
+  const overlay = document.querySelector('.overlay');
+
+  const rect = canvas.getBoundingClientRect();
+  const half = rect.width / 2 - 2;
+
+  overlay.style.setProperty('--half', half + 'px');
+}
+
+window.addEventListener('resize', updateMask);
+window.addEventListener('load', updateMask);
+	
 let canvas, stage, exportRoot;
 function init() {
   canvas = document.getElementById("canvas");
