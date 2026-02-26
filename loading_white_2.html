@@ -27,8 +27,9 @@ html, body {
   left: 50%;
   width: min(600px, 100vw);
   height: min(600px, 100vh);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) translateZ(0); /* force GPU layer */
   z-index: 1;
+  will-change: transform; /* hint to browser */
 }
 
 #canvas {
@@ -37,27 +38,42 @@ html, body {
   display: block;
 }
 
-/* The magic */
-.overlay {
+.frame {
   position: fixed;
-  inset: 0;
   background: black;
   z-index: 2;
   pointer-events: none;
+  will-change: transform, width, height; /* GPU + size changes */
+  transform: translateZ(0); /* force compositing layer */
+}
 
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 100%,
-    0 100%,
-    0 0,
-    50% calc(50% - var(--half)),
-    calc(50% - var(--half)) calc(50% - var(--half)),
-    calc(50% - var(--half)) calc(50% + var(--half)),
-    calc(50% + var(--half)) calc(50% + var(--half)),
-    calc(50% + var(--half)) calc(50% - var(--half)),
-    50% calc(50% - var(--half))
-  );
+/* Overlap by 1px to cover subpixel gaps (safe because canvas is on top) */
+.frame.top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0; /* updated in JS */
+}
+
+.frame.bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0; /* updated in JS */
+}
+
+.frame.left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0; /* updated in JS */
+}
+
+.frame.right {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 0; /* updated in JS */
 }
     
     
@@ -185,7 +201,11 @@ html, body {
 <div id="loader_wrapper">
 
   <div id="overlay"></div>
-  <div class="overlay"></div>
+<div class="frame top"></div>
+<div class="frame bottom"></div>
+<div class="frame left"></div>
+<div class="frame right"></div>
+
 <div id="animation_container">
   <canvas id="canvas" width="600" height="600"></canvas>
 </div>
@@ -235,19 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-function updateMask() {
-  const canvas = document.getElementById('canvas');
-  const overlay = document.querySelector('.overlay');
-
-  const rect = canvas.getBoundingClientRect();
-  const half = rect.width / 2 - 2;
-
-  overlay.style.setProperty('--half', half + 'px');
-}
-
-window.addEventListener('resize', updateMask);
-window.addEventListener('load', updateMask);
-	
 let canvas, stage, exportRoot;
 function init() {
   canvas = document.getElementById("canvas");
@@ -271,8 +278,45 @@ function startLoaderAnimation() {
   tl.to(overlay,{opacity:0,duration:0.2});
   tl.to(loader,{scale:30,duration:0.7,ease:"power3.in",delay:2});
   tl.set(loader,{display:"none"});
+	
+	function updateFrames() {
+  const canvas = document.getElementById('canvas');
+  const rect = canvas.getBoundingClientRect();
+  const offset = 2; // your retina/high-res safety margin
+
+  // The visible canvas area after offset (inset by offset on each side)
+  const visibleLeft   = rect.left   + offset;
+  const visibleTop    = rect.top    + offset;
+  const visibleRight  = rect.right  - offset;
+  const visibleBottom = rect.bottom - offset;
+
+  // Top frame: covers from screen top down to visible top
+  document.querySelector('.frame.top').style.height = `${visibleTop}px`;
+
+  // Bottom frame: from visible bottom to screen bottom
+  document.querySelector('.frame.bottom').style.height = `${window.innerHeight - visibleBottom}px`;
+
+  // Left frame: from screen left to visible left, full height
+  document.querySelector('.frame.left').style.width = `${visibleLeft}px`;
+
+  // Right frame: from visible right to screen right, full height
+  document.querySelector('.frame.right').style.width = `${window.innerWidth - visibleRight}px`;
+}
+
+// Trigger on relevant events
+window.addEventListener('resize', updateFrames);
+window.addEventListener('orientationchange', updateFrames);
+window.addEventListener('load', updateFrames);
+
+// Optional: call it immediately and after a tiny delay (helps on some mobile browsers)
+updateFrames();
+setTimeout(updateFrames, 100);
 }
 window.onload = init;
+// Simple debounce helper (prevents spamming during resize/orientation)
+
+	
+
 </script>
 </body>
 </html>
