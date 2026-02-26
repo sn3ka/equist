@@ -22,10 +22,10 @@ html, body {
 #loader_wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; transform-origin: center center; }
 #overlay { position: fixed; inset: 0; background: black; z-index: 1000; }
 .ov { position: fixed; background: black; z-index: 900; }
-.ov.top { top:0; left:0; width:100%; height:calc(50% - 298px); }
-.ov.bottom { bottom:0; left:0; width:100%; height:calc(50% - 298px); }
-.ov.left { top:calc(50% - 298px); left:0; width:calc(50% - 298px); height:600px; }
-.ov.right { top:calc(50% - 298px); right:0; width:calc(50% - 298px); height:600px; }
+.ov.top { top:0; left:0; width:100%; height:calc(50% - 600px/2); }
+.ov.bottom { bottom:0; left:0; width:100%; height:calc(50% - 600px/2); }
+.ov.left { top:calc(50% - 600px/2); left:0; width:calc(50% - 600px/2); height:600px; }
+.ov.right { top:calc(50% - 600px/2); right:0; width:calc(50% - 600px/2); height:600px; }
 #animation_container { position: relative; width: 600px; height: 600px; transform: scale(1); transform-origin: center center; z-index: 800; }
     
     
@@ -142,14 +142,8 @@ html, body {
    .scroll-cue{padding-bottom:5rem}
 }
 @media (max-width: 650px) {
-  .hero-title { font-size: 2.2rem; }
-  .hero-logo { width: 200px; }
-.ov.top { top:0; left:0; width:100%; height:calc(50% - 148px); }
-.ov.bottom { bottom:0; left:0; width:100%; height:calc(50% - 148px); }
-.ov.left { top:calc(50% - 148px); left:0; width:calc(50% - 148px); height:300px; }
-.ov.right { top:calc(50% - 148px); right:0; width:calc(50% - 148px); height:300px; }
-#animation_container { position: relative; width: 600px; height: 600px; transform-origin: center center; z-index: 800; }
-
+.hero-title { font-size: 2.2rem; }
+.hero-logo { width: 200px; }
 }
 </style>
 </head>
