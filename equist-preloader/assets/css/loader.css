@@ -1,4 +1,23 @@
-#overlay { position: fixed; inset: 0; background: black; z-index: 1000; }
+@charset "UTF-8";
+/* Safety net: if JS is slow or disabled, don't leave black screen forever */
+#loader_wrapper:not(.is-loading) {
+    display: none !important;
+}
+
+/* While loader is meant to be active */
+html.loader-active body {
+    overflow: hidden;           /* prevent content scroll flash */
+}
+
+/* Your existing rules stay below */
+#loader-overlay { 
+    position: fixed; 
+    inset: 0; 
+    background: #000; 
+    z-index: 1000; 
+}
+
+/* ... rest of your CSS ... */
 /* Loader styles (keep for loading animation) */
 #loader_wrapper { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; transform-origin: center center; }
 /* Center container */

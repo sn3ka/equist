@@ -1,13 +1,79 @@
 var stage;
+
+// FAST EARLY DECISION – runs as soon as script loads
+(function () {
+    const wrapper = document.getElementById('loader_wrapper');
+    if (!wrapper) return;
+
+    const settings = window.CCL_LOADER || {};
+    const mode = settings.mode || 'hybrid';
+    const isHome = !!settings.isHome;
+
+    console.log('[Preloader Early] CCL_LOADER:', settings);
+    console.log('[Preloader Early] Mode:', mode, '| IsHome:', isHome);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const lastSeen = localStorage.getItem('equist_loader_seen');
+
+    console.log('[Preloader Early] lastSeen:', lastSeen, 'today:', today);
+
+    let shouldShow = false;
+    let shouldSetSeen = false;
+
+    if (mode === 'home') {
+        shouldShow = isHome;
+        shouldSetSeen = false;
+    } else if (mode === 'home-hybrid') {
+        shouldShow = isHome && (lastSeen !== today);
+        shouldSetSeen = shouldShow;
+    } else if (mode === 'hybrid') {
+        shouldShow = lastSeen !== today;
+        shouldSetSeen = shouldShow;
+    }
+
+    console.log('[Preloader Early] shouldShow:', shouldShow);
+
+    if (shouldShow) {
+    console.log('[Preloader Early] Showing loader → adding loader-active');
+    document.documentElement.classList.add('loader-active');
+    if (shouldSetSeen) {
+        localStorage.setItem('equist_loader_seen', today);
+        console.log('[Preloader] Set seen to:', today);
+    }
+} else {
+    console.log('[Preloader] Skipping → removing wrapper (should be no flash)');
+    wrapper.remove();
+    return;
+}
+})();
+
+// ────────────────────────────────────────────────
+// Original loader logic (only runs if we decided to show)
+// ────────────────────────────────────────────────
 (function () {
   'use strict';
 
   let canvas, exportRoot;
   let initialized = false;
 
+  function shouldPlayLoader() {
+    const wrapper = document.getElementById('loader_wrapper');
+    if (!wrapper) return false;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      wrapper.remove();
+      console.log('[Preloader] Reduced motion → removed');
+      return false;
+    }
+
+    return true;
+  }
+
   function initLoader() {
     if (initialized) return;
     initialized = true;
+
+    if (!shouldPlayLoader()) return;
 
     canvas = document.getElementById('canvas');
     const container = document.getElementById('animation_container');
@@ -21,10 +87,7 @@ var stage;
     const lib = comp.getLibrary();
 
     exportRoot = new lib.E_loading_white_2();
-
-    // IMPORTANT: stage must be global
     stage = new lib.Stage(canvas);
-
     stage.addChild(exportRoot);
 
     createjs.Ticker.framerate = lib.properties.fps;
@@ -44,26 +107,23 @@ var stage;
   }
 
   function unlockScroll() {
-    document.body.style.overflow =
-      document.body.dataset.loaderOverflow || '';
+    document.body.style.overflow = document.body.dataset.loaderOverflow || '';
   }
 
   function startLoaderAnimation() {
     const loader = document.getElementById('loader_wrapper');
-    const overlay = document.getElementById('overlay');
+    const overlay = document.getElementById('loader-overlay');
 
-    overlay.style.opacity = 1;
-    overlay.style.display = 'block';
-
-    const tl = gsap.timeline({
+    gsap.timeline({
       onComplete() {
         loader.remove();
         unlockScroll();
+        document.documentElement.classList.remove('loader-active');
+        console.log('[Preloader] Animation complete – cleaned up');
       }
-    });
-
-    tl.to(overlay, { opacity: 0, duration: 0.2 });
-    tl.to(loader, {
+    })
+    .to(overlay, { opacity: 0, duration: 0.2 })
+    .to(loader, {
       scale: 30,
       duration: 0.7,
       ease: 'power3.in',
@@ -72,22 +132,13 @@ var stage;
   }
 
   function updateFrames() {
-		if (!canvas) return;
-		
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const offset = 2;
-
-    const visibleLeft = rect.left + offset;
-    const visibleTop = rect.top + offset;
-    const visibleRight = rect.right - offset;
-    const visibleBottom = rect.bottom - offset;
-
-    document.querySelector('.frame.top').style.height = `${visibleTop}px`;
-    document.querySelector('.frame.bottom').style.height =
-      `${window.innerHeight - visibleBottom}px`;
-    document.querySelector('.frame.left').style.width = `${visibleLeft}px`;
-    document.querySelector('.frame.right').style.width =
-      `${window.innerWidth - visibleRight}px`;
+    document.querySelector('.frame.top').style.height = `${rect.top + offset}px`;
+    document.querySelector('.frame.bottom').style.height = `${window.innerHeight - rect.bottom + offset}px`;
+    document.querySelector('.frame.left').style.width = `${rect.left + offset}px`;
+    document.querySelector('.frame.right').style.width = `${window.innerWidth - rect.right + offset}px`;
   }
 
   window.addEventListener('resize', updateFrames);
